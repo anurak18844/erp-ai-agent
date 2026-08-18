@@ -1,0 +1,21 @@
+collection: campaigns
+aliases: [campaign, marketing_campaign, แคมเปญ, การตลาด, งบโฆษณา]
+description: แคมเปญการตลาดสำหรับหาลูกค้า กระตุ้นการเช่า และติดตามงบประมาณ
+fields:
+  _id: {type: ObjectId, description: รหัสภายในแคมเปญ, required: true}
+  campaign_code: {type: string, description: รหัสแคมเปญสำหรับอ้างอิง, required: true}
+  name: {type: string, description: ชื่อแคมเปญ}
+  channel: {type: string, description: ช่องทางการตลาด, enum: [social, email, partner, sms]}
+  start_date: {type: datetime, description: วันที่เริ่มแคมเปญ}
+  end_date: {type: datetime, description: วันที่สิ้นสุดแคมเปญ}
+  budget: {type: decimal, description: งบประมาณแคมเปญ}
+  status: {type: string, description: สถานะแคมเปญ, enum: [draft, active, completed, cancelled]}
+relationships: []
+business_rules:
+  - status = active หมายถึงแคมเปญกำลังดำเนินอยู่ ณ เวลาที่ตรวจสอบ
+  - status = completed หมายถึงสิ้นสุดแคมเปญแล้วและสามารถสรุปผลสุดท้ายได้
+  - conversion และ attributed_revenue ต้องคำนวณจาก campaign_engagements
+  - ROI แบบง่ายเท่ากับ attributed_revenue รวม ลบ budget แล้วหารด้วย budget เมื่อ budget มากกว่าศูนย์
+notes:
+  - ห้ามใช้จำนวน engagement เป็นจำนวนลูกค้าโดยตรง ต้องนับ customer_id ที่ไม่ซ้ำเมื่อคำถามถามจำนวนลูกค้า
+  - แคมเปญและโปรโมชั่นเป็นคนละแนวคิด แคมเปญใช้วัดการตลาด ส่วนโปรโมชั่นคือสิทธิ์ที่ใช้กับรายการเช่า

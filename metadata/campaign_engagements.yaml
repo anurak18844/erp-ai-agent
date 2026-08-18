@@ -1,0 +1,24 @@
+collection: campaign_engagements
+aliases: [engagement, campaign_result, lead, conversion, ผลแคมเปญ, ลูกค้าเป้าหมาย]
+description: ผลการติดต่อและ conversion ของลูกค้าในแต่ละแคมเปญ
+fields:
+  _id: {type: ObjectId, description: รหัส engagement, required: true}
+  campaign_id: {type: ObjectId, description: แคมเปญที่ติดต่อ, required: true}
+  customer_id: {type: ObjectId, description: ลูกค้าที่ได้รับการติดต่อ, required: true}
+  rental_id: {type: ObjectId, description: รายการเช่าที่ attribution ให้แคมเปญเมื่อเกิด conversion}
+  contacted_at: {type: datetime, description: วันเวลาที่ติดต่อ}
+  outcome: {type: string, description: ผลการติดต่อ, enum: [delivered, opened, interested, converted, opted_out]}
+  attributed_revenue: {type: decimal, description: รายได้ที่ attribution ให้แคมเปญ}
+relationships:
+  - {target_collection: campaigns, local_field: campaign_id, foreign_field: _id, relationship_type: many-to-one, description: engagement เป็นของแคมเปญหนึ่งรายการ}
+  - {target_collection: customers, local_field: customer_id, foreign_field: _id, relationship_type: many-to-one, description: engagement เกิดกับลูกค้าหนึ่งราย}
+  - {target_collection: rentals, local_field: rental_id, foreign_field: _id, relationship_type: many-to-one, description: conversion อาจเชื่อมกับรายการเช่าหนึ่งรายการ}
+business_rules:
+  - outcome = converted เท่านั้นที่ควรนับเป็น conversion
+  - attributed_revenue ต้องมากกว่าศูนย์เฉพาะ engagement ที่ converted
+  - conversion rate เท่ากับจำนวน converted หารจำนวน engagement ที่นำมาวัด โดยต้องระบุฐานที่ใช้
+  - outcome = opted_out หมายถึงลูกค้าไม่ประสงค์รับการติดต่อ และไม่ควรเสนอให้ติดต่อซ้ำ
+notes:
+  - เมื่อนับ conversion ให้นับ engagement _id ที่ไม่ซ้ำหลัง join
+  - เมื่อนับลูกค้า conversion ให้นับ customer_id ที่ไม่ซ้ำ
+  - ห้ามใช้ $size กับ $addToSet ที่คืน null เมื่อไม่ converted เพราะ null จะถูกนับเพิ่มหนึ่งค่า ให้ใช้ $sum กับ $cond 1/0 หรือกรอง null ออกจาก set ก่อนนับ

@@ -1,0 +1,33 @@
+collection: charging_sessions
+aliases: [charging, charge_session, energy_usage, การชาร์จ, ค่าไฟ, พลังงาน]
+description: บันทึกรอบการชาร์จรถไฟฟ้า ค่าไฟ พลังงาน และระดับแบตเตอรี่
+fields:
+  _id: {type: ObjectId, description: รหัสรอบชาร์จ, required: true}
+  session_code: {type: string, description: รหัสรอบชาร์จสำหรับอ้างอิง, required: true}
+  vehicle_id: {type: ObjectId, description: รถที่เข้าชาร์จ, required: true}
+  rental_id: {type: ObjectId, description: รายการเช่าที่เกี่ยวข้อง}
+  customer_id: {type: ObjectId, description: ลูกค้าที่เกี่ยวข้อง}
+  station_name: {type: string, description: ชื่อสถานีชาร์จ}
+  started_at: {type: datetime, description: เวลาเริ่มชาร์จ}
+  ended_at: {type: datetime, description: เวลาสิ้นสุดการชาร์จ}
+  energy_kwh: {type: decimal, description: พลังงานไฟฟ้าที่ชาร์จหน่วยกิโลวัตต์ชั่วโมง}
+  cost: {type: decimal, description: ค่าใช้จ่ายในการชาร์จ}
+  start_battery_percent: {type: int, description: ระดับแบตเตอรี่ก่อนชาร์จเป็นเปอร์เซ็นต์}
+  end_battery_percent: {type: int, description: ระดับแบตเตอรี่หลังชาร์จเป็นเปอร์เซ็นต์}
+  status: {type: string, description: สถานะรอบชาร์จ, enum: [completed, in_progress, failed]}
+relationships:
+  - {target_collection: vehicles, local_field: vehicle_id, foreign_field: _id, relationship_type: many-to-one, description: รอบชาร์จเป็นของรถหนึ่งคัน}
+  - {target_collection: rentals, local_field: rental_id, foreign_field: _id, relationship_type: many-to-one, description: รอบชาร์จอาจเกิดระหว่างรายการเช่า}
+  - {target_collection: customers, local_field: customer_id, foreign_field: _id, relationship_type: many-to-one, description: รอบชาร์จอาจเกี่ยวข้องกับลูกค้าหนึ่งราย}
+business_rules:
+  - ทุก query ที่ sum หรือ avg energy_kwh หรือ cost โดยผู้ใช้ไม่ได้ระบุสถานะอื่น ต้องมี $match status = completed ใน charging branch ก่อน $group
+  - status = completed หมายถึงชาร์จเสร็จและสามารถใช้ ended_at energy_kwh และ cost สรุปผลได้
+  - status = in_progress หมายถึงกำลังชาร์จ ห้ามสรุป ended_at หรือยอดพลังงานเป็นค่าสุดท้าย
+  - status = failed หมายถึงชาร์จไม่สำเร็จ และไม่ควรนับ energy_kwh หรือ cost เป็นการใช้พลังงานสำเร็จ
+  - พลังงานรวมและค่าใช้จ่ายรวมให้นับเฉพาะรอบ completed เว้นแต่ผู้ใช้ระบุอย่างอื่น
+notes:
+  - เมื่อผู้ใช้ถามว่าค่าเช่าของรอบชาร์จจ่ายแล้วหรือยัง ต้อง project payments.status, payments.amount, payments.paid_amount และ payments.due_date จากรายการเช่าเดียวกัน ห้ามตอบจาก has_payment หรือจำนวนเอกสาร payment อย่างเดียว
+  - เมื่อต้องตรวจ payment ของรอบชาร์จ ให้เดิน relationship ตามรายการเช่า charging_sessions.rental_id ไป rentals._id แล้ว rentals._id ไป payments.rental_id ห้าม join charging_sessions.rental_id กับ payments.rental_id โดยตรง และห้ามสร้าง payment status placeholder
+  - เมื่อรวม charging กับ payment หรือ child collection อื่น ให้สรุปจำนวนและยอด charging ต่อ vehicle_id หรือ model ก่อน join ห้าม unwind สอง array พร้อมกันแล้ว sum
+  - เมื่อนับรอบชาร์จหลัง join ให้นับ session _id ที่ไม่ซ้ำ
+  - เปอร์เซ็นต์แบตเตอรี่ต้องอยู่ระหว่าง 0 ถึง 100

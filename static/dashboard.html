@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>WeDrive — Operations Dashboard</title>
+  <style>
+    :root {
+      --ink:#17211b; --muted:#69736c; --paper:#f3f1e9; --card:#fffdf7;
+      --line:#dcd9ce; --green:#164f3b; --mint:#dcebe3; --lime:#cfe66d;
+      --amber:#d68b24; --red:#b94d44; --blue:#35708d; --shadow:0 12px 36px #18382b12;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    }
+    *{box-sizing:border-box} body{margin:0;background:var(--paper);color:var(--ink)}
+    body:before{content:"";position:fixed;inset:0 0 auto;height:290px;background:var(--green);z-index:-1}
+    .shell{max-width:1440px;margin:auto;padding:0 28px 48px}
+    header{height:104px;display:flex;align-items:center;justify-content:space-between;color:white;gap:20px}
+    .brand{display:flex;align-items:center;gap:13px}.mark{width:42px;height:42px;border:1px solid #ffffff45;border-radius:13px;display:grid;place-items:center;background:#ffffff0f;font-size:20px}.brand h1{font-size:20px;margin:0;letter-spacing:-.3px}.brand p{margin:3px 0 0;color:#cfe0d7;font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+    .header-actions{display:flex;align-items:center;gap:12px}.sync{font-size:12px;color:#d5e2db;text-align:right}.refresh{border:1px solid #ffffff50;background:transparent;color:white;border-radius:10px;padding:9px 14px;font:inherit;cursor:pointer}.refresh:hover{background:#ffffff12}.refresh:disabled{opacity:.6}
+    .hero{background:#fbfaf4;border-radius:22px;padding:28px;box-shadow:var(--shadow);border:1px solid #ffffff;display:flex;align-items:end;justify-content:space-between;gap:20px}.hero .eyebrow{margin:0 0 7px;color:var(--green);font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}.hero h2{font-size:30px;line-height:1.15;letter-spacing:-1px;margin:0}.hero .sub{color:var(--muted);margin:10px 0 0}.health{display:flex;align-items:center;gap:8px;color:var(--green);font-weight:700;font-size:13px;white-space:nowrap}.dot{width:9px;height:9px;background:#45a978;border-radius:50%;box-shadow:0 0 0 5px #45a9781c}
+    .metrics{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;margin:16px 0}.metric{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;min-height:120px}.metric .label{color:var(--muted);font-size:12px;font-weight:650}.metric .value{font-size:27px;font-weight:780;letter-spacing:-.8px;margin-top:13px}.metric .hint{font-size:11px;color:var(--muted);margin-top:4px}.metric.alert .value{color:var(--red)}.metric.warn .value{color:#a76812}
+    .grid{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(310px,.75fr);gap:16px;margin-top:16px}.stack{display:grid;gap:16px}.panel{background:var(--card);border:1px solid var(--line);border-radius:18px;box-shadow:0 7px 24px #18382b08;overflow:hidden}.panel-head{padding:19px 21px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px}.panel h3{font-size:15px;margin:0}.panel .caption{color:var(--muted);font-size:11px}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:650px}th{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:#7e8780;text-align:left;padding:10px 21px;border-top:1px solid #ebe8df;border-bottom:1px solid #ebe8df;background:#faf8f1}td{font-size:12px;padding:13px 21px;border-bottom:1px solid #edeae2;vertical-align:middle}tr:last-child td{border-bottom:0}.strong{font-weight:750}.secondary{display:block;color:var(--muted);font-size:10px;margin-top:3px}.money{text-align:right;font-variant-numeric:tabular-nums;font-weight:750}.badge{display:inline-flex;align-items:center;padding:4px 8px;border-radius:999px;font-size:10px;font-weight:750;background:#e8ece9;color:#536058;white-space:nowrap}.badge.red{background:#f6dedb;color:#8e342d}.badge.amber{background:#f8e8c9;color:#8d5a0d}.badge.green{background:#dcece3;color:#236247}.badge.blue{background:#dbeaf0;color:#265f78}
+    .bars{padding:4px 21px 20px}.bar-row{display:grid;grid-template-columns:96px 1fr 30px;gap:10px;align-items:center;margin:13px 0;font-size:12px}.track{height:8px;background:#e7e6de;border-radius:10px;overflow:hidden}.fill{height:100%;background:var(--green);border-radius:10px}.bar-row:nth-child(2n) .fill{background:var(--lime)}
+    .collections{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:var(--line);border-top:1px solid var(--line)}.collection{background:var(--card);padding:12px 16px;display:flex;justify-content:space-between;font-size:11px}.collection b{font-size:13px}
+    .empty{padding:26px 21px;color:var(--muted);font-size:12px;text-align:center}.error{display:none;background:#f8dfdc;color:#80332c;border:1px solid #e8b9b4;padding:12px 16px;border-radius:12px;margin:14px 0;font-size:13px}
+    .skeleton{color:transparent!important;background:linear-gradient(90deg,#ebe8df 25%,#f8f6ef 50%,#ebe8df 75%);background-size:200% 100%;animation:load 1.2s infinite;border-radius:7px}@keyframes load{to{background-position:-200% 0}}
+    footer{color:var(--muted);font-size:11px;text-align:center;padding-top:25px}
+    @media(max-width:1100px){.metrics{grid-template-columns:repeat(3,1fr)}.grid{grid-template-columns:1fr}}
+    @media(max-width:650px){.shell{padding:0 14px 32px}header{height:88px}.sync{display:none}.hero{padding:21px;display:block}.hero h2{font-size:24px}.health{margin-top:18px}.metrics{grid-template-columns:repeat(2,1fr)}.metric{min-height:105px;padding:15px}.metric .value{font-size:23px}.collections{grid-template-columns:1fr}.panel-head{padding:17px}.brand p{display:none}}
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <div class="brand"><div class="mark">↗</div><div><h1>WeDrive ERP</h1><p>Operations dashboard</p></div></div>
+      <div class="header-actions"><div id="sync" class="sync">กำลังเชื่อมต่อฐานข้อมูล…</div><button id="refresh" class="refresh">รีเฟรชข้อมูล</button></div>
+    </header>
+
+    <main>
+      <section class="hero"><div><p class="eyebrow">ภาพรวมวันนี้</p><h2>ทุกเรื่องสำคัญ อยู่ในหน้าจอเดียว</h2><p class="sub">ติดตามรถ รายการเช่า ยอดค้าง และงานที่ต้องดำเนินการ</p></div><div class="health"><span class="dot"></span>ข้อมูลจาก MongoDB แบบ read-only</div></section>
+      <div id="error" class="error"></div>
+
+      <section class="metrics">
+        <article class="metric"><div class="label">ลูกค้าทั้งหมด</div><div class="value skeleton" id="m-customers">000</div><div class="hint">บัญชีในระบบ</div></article>
+        <article class="metric"><div class="label">รถทั้งหมด</div><div class="value skeleton" id="m-vehicles">000</div><div class="hint">รถในฟลีท</div></article>
+        <article class="metric"><div class="label">กำลังเช่า</div><div class="value skeleton" id="m-rentals">000</div><div class="hint">รายการที่ active</div></article>
+        <article class="metric warn"><div class="label">ยอดที่ยังต้องชำระ</div><div class="value skeleton" id="m-balance">฿000</div><div class="hint" id="m-payments">— รายการ</div></article>
+        <article class="metric alert"><div class="label">งานซ่อมไม่เสร็จ</div><div class="value skeleton" id="m-maintenance">000</div><div class="hint">เปิดงาน / กำลังซ่อม</div></article>
+        <article class="metric alert"><div class="label">อุบัติเหตุที่ติดตาม</div><div class="value skeleton" id="m-incidents">000</div><div class="hint">รับแจ้ง / กำลังตรวจสอบ</div></article>
+      </section>
+
+      <div class="grid">
+        <div class="stack">
+          <section class="panel"><div class="panel-head"><div><h3>ยอดที่ยังต้องชำระ</h3><span class="caption">เรียงตามวันครบกำหนด</span></div></div><div class="table-wrap"><table><thead><tr><th>ลูกค้า</th><th>ทะเบียนรถ</th><th>ครบกำหนด</th><th>สถานะ</th><th style="text-align:right">ยอดคงเหลือ</th></tr></thead><tbody id="payments"></tbody></table></div></section>
+          <section class="panel"><div class="panel-head"><div><h3>รายการเช่าที่กำลังดำเนินอยู่</h3><span class="caption">รายการที่ใกล้ถึงวันคืนขึ้นก่อน</span></div></div><div class="table-wrap"><table><thead><tr><th>ลูกค้า</th><th>รถ</th><th>ทะเบียน</th><th>เริ่มเช่า</th><th>กำหนดคืน</th></tr></thead><tbody id="rentals"></tbody></table></div></section>
+          <section class="panel"><div class="panel-head"><div><h3>งานซ่อมที่ยังไม่เสร็จ</h3><span class="caption">รายการล่าสุด</span></div></div><div class="table-wrap"><table><thead><tr><th>รถ</th><th>ทะเบียน</th><th>เปิดงาน</th><th>รายละเอียด</th><th>สถานะ</th></tr></thead><tbody id="maintenance"></tbody></table></div></section>
+        </div>
+
+        <aside class="stack">
+          <section class="panel"><div class="panel-head"><div><h3>สถานะรถในฟลีท</h3><span class="caption">จำนวนรถแยกตามสถานะ</span></div></div><div id="vehicle-bars" class="bars"></div></section>
+          <section class="panel"><div class="panel-head"><div><h3>สถานะการชำระ</h3><span class="caption">จำนวนเอกสารการชำระเงิน</span></div></div><div id="payment-bars" class="bars"></div></section>
+          <section class="panel"><div class="panel-head"><div><h3>อุบัติเหตุที่ต้องติดตาม</h3><span class="caption">ไม่รวมรายการที่ปิดแล้ว</span></div></div><div id="incidents"></div></section>
+          <section class="panel"><div class="panel-head"><div><h3>ข้อมูลในฐาน</h3><span class="caption">จำนวนเอกสารแยก collection</span></div></div><div id="collections" class="collections"></div></section>
+        </aside>
+      </div>
+    </main>
+    <footer>Internal dashboard · แสดงข้อมูลเพื่อการปฏิบัติงานแบบอ่านอย่างเดียว</footer>
+  </div>
+
+  <script>
+    const $ = id => document.getElementById(id);
+    const esc = value => String(value ?? '—').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const num = value => new Intl.NumberFormat('th-TH').format(Number(value || 0));
+    const money = value => new Intl.NumberFormat('th-TH',{style:'currency',currency:'THB',maximumFractionDigits:0}).format(Number(value || 0));
+    const date = value => value ? new Intl.DateTimeFormat('th-TH',{day:'numeric',month:'short',year:'2-digit'}).format(new Date(value)) : '—';
+    const dateTime = value => value ? new Intl.DateTimeFormat('th-TH',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}).format(new Date(value)) : '—';
+    const labels = {
+      available:'พร้อมให้เช่า',rented:'ถูกเช่า',maintenance:'ซ่อมบำรุง',retired:'ยุติใช้งาน',
+      pending:'รอชำระ',partial:'ชำระบางส่วน',paid:'ชำระแล้ว',overdue:'เลยกำหนด',void:'ยกเลิก',
+      open:'เปิดงาน',in_progress:'กำลังดำเนินการ',reported:'รับแจ้ง',investigating:'กำลังตรวจสอบ',
+      minor:'เล็กน้อย',major:'รุนแรง',critical:'วิกฤต'
+    };
+    const badgeClass = value => ['overdue','critical'].includes(value)?'red':['pending','partial','open','reported','major'].includes(value)?'amber':['paid','available'].includes(value)?'green':'blue';
+    const badge = value => `<span class="badge ${badgeClass(value)}">${esc(labels[value] || value)}</span>`;
+    const empty = cols => `<tr><td colspan="${cols}" class="empty">ไม่มีรายการในขณะนี้</td></tr>`;
+
+    function renderBars(target, rows){
+      const max = Math.max(...rows.map(x=>x.count),1);
+      $(target).innerHTML = rows.length ? rows.map(row=>`<div class="bar-row"><span>${esc(labels[row.status]||row.status)}</span><div class="track"><div class="fill" style="width:${Math.max(5,row.count/max*100)}%"></div></div><b>${num(row.count)}</b></div>`).join('') : '<div class="empty">ไม่มีข้อมูล</div>';
+    }
+
+    function render(data){
+      const s=data.summary;
+      [['m-customers',s.customers],['m-vehicles',s.vehicles],['m-rentals',s.active_rentals],['m-maintenance',s.unfinished_maintenance],['m-incidents',s.open_incidents]].forEach(([id,v])=>{$(id).textContent=num(v);$(id).classList.remove('skeleton')});
+      $('m-balance').textContent=money(s.outstanding_amount);$('m-balance').classList.remove('skeleton');$('m-payments').textContent=`${num(s.outstanding_payments)} รายการ`;
+      renderBars('vehicle-bars',data.vehicle_status);renderBars('payment-bars',data.payment_status);
+
+      $('payments').innerHTML=data.outstanding_payments.map(x=>`<tr><td><span class="strong">${esc(x.customer_name)}</span><span class="secondary">${esc(x.customer_code)}</span></td><td>${esc(x.license_plate)}</td><td>${date(x.due_date)}</td><td>${badge(x.status)}</td><td class="money">${money(x.balance)}</td></tr>`).join('')||empty(5);
+      $('rentals').innerHTML=data.active_rentals.map(x=>`<tr><td><span class="strong">${esc(x.customer_name)}</span><span class="secondary">${esc(x.customer_code)}</span></td><td>${esc((x.vehicle||'').trim())}</td><td>${esc(x.license_plate)}</td><td>${date(x.start_date)}</td><td class="strong">${date(x.return_date)}</td></tr>`).join('')||empty(5);
+      $('maintenance').innerHTML=data.maintenance.map(x=>`<tr><td>${esc((x.vehicle||'').trim())}</td><td class="strong">${esc(x.license_plate)}</td><td>${date(x.opened_at)}</td><td>${esc(x.description)}</td><td>${badge(x.status)}</td></tr>`).join('')||empty(5);
+      $('incidents').innerHTML=data.incidents.length?data.incidents.map(x=>`<div style="padding:14px 18px;border-top:1px solid #ebe8df"><div style="display:flex;justify-content:space-between;gap:8px"><b style="font-size:12px">${esc(x.incident_code)} · ${esc(x.license_plate)}</b>${badge(x.severity)}</div><p style="font-size:11px;margin:7px 0;color:var(--muted);line-height:1.5">${esc(x.description)}</p><div style="display:flex;justify-content:space-between;align-items:center"><span class="secondary">${dateTime(x.occurred_at)}</span>${badge(x.status)}</div></div>`).join(''):'<div class="empty">ไม่มีเหตุที่ต้องติดตาม</div>';
+      $('collections').innerHTML=Object.entries(data.collection_counts).map(([name,count])=>`<div class="collection"><span>${esc(name)}</span><b>${num(count)}</b></div>`).join('');
+      $('sync').innerHTML=`อัปเดตล่าสุด<br><b>${dateTime(data.generated_at)}</b>`;
+    }
+
+    async function load(){
+      $('refresh').disabled=true;$('refresh').textContent='กำลังโหลด…';$('error').style.display='none';
+      try{const response=await fetch('/api/dashboard',{headers:{Accept:'application/json'}});if(!response.ok)throw new Error(`โหลดข้อมูลไม่สำเร็จ (${response.status})`);render(await response.json())}
+      catch(error){$('error').textContent=error.message+' กรุณาตรวจการเชื่อมต่อ MongoDB แล้วลองใหม่';$('error').style.display='block';$('sync').textContent='เชื่อมต่อไม่สำเร็จ'}
+      finally{$('refresh').disabled=false;$('refresh').textContent='รีเฟรชข้อมูล'}
+    }
+    $('refresh').addEventListener('click',load);load();
+  </script>
+</body>
+</html>

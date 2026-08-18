@@ -1,0 +1,27 @@
+collection: rentals
+aliases: [rental, booking, rental_info, รายการเช่า, การเช่า, การจอง]
+description: เก็บข้อมูลรายการเช่ารถของลูกค้า
+fields:
+  _id: {type: ObjectId, description: รหัสรายการเช่า, required: true}
+  customer_id: {type: ObjectId, description: รหัสลูกค้าที่เป็นเจ้าของรายการเช่า, required: true}
+  vehicle_id: {type: ObjectId, description: รหัสรถที่ถูกเช่า, required: true}
+  promotion_id: {type: ObjectId, description: รหัสโปรโมชั่นที่ใช้กับรายการเช่า}
+  start_date: {type: datetime, description: วันที่เริ่มเช่า}
+  return_date: {type: datetime, description: วันที่คาดว่าจะคืนรถ}
+  actual_return_date: {type: datetime, description: วันที่คืนรถจริง}
+  adjustment_days: {type: int, description: จำนวนวันที่เพิ่มหรือลดจากสิทธิ์, example: 7}
+  adjustment_reason: {type: string, description: สาเหตุโดยตรงที่ทำให้เกิดการเพิ่มหรือลดวัน}
+  status: {type: string, description: สถานะรายการเช่า, enum: [active, returned, cancelled]}
+relationships:
+  - {target_collection: customers, local_field: customer_id, foreign_field: _id, relationship_type: many-to-one, description: รายการเช่าเป็นของลูกค้าหนึ่งราย}
+  - {target_collection: vehicles, local_field: vehicle_id, foreign_field: _id, relationship_type: many-to-one, description: รายการเช่าอ้างอิงรถหนึ่งคัน}
+  - {target_collection: promotions, local_field: promotion_id, foreign_field: _id, relationship_type: many-to-one, description: โปรโมชั่นที่ใช้กับรายการเช่า}
+business_rules:
+  - หาก adjustment_days ไม่เท่ากับ 0 และ adjustment_reason มีค่า ให้ใช้ adjustment_reason เป็นสาเหตุหลักในการอธิบายการเพิ่มหรือลดวัน
+  - status = active หมายถึงรายการเช่าที่ยังดำเนินอยู่
+  - status = returned หมายถึงรถในรายการนี้ถูกคืนแล้ว โดยใช้ actual_return_date เป็นวันคืนจริงเมื่อมีข้อมูล
+  - status = cancelled หมายถึงรายการเช่าถูกยกเลิกและไม่ควรอธิบายว่าเป็นการเช่าที่กำลังดำเนินอยู่
+notes:
+  - ห้ามเดาความหมายของ field ที่ไม่มี description
+  - หาก metadata ไม่เพียงพอ ให้หยุดและแจ้งว่าข้อมูลไม่เพียงพอแทนการเดา
+  - เมื่อตอบผู้ใช้ให้แปลสถานะเป็นภาษาธรรมชาติ และกล่าวถึง return_date เมื่อช่วยให้ผู้ใช้ตัดสินใจได้

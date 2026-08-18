@@ -1,0 +1,31 @@
+collection: payments
+aliases: [payment, invoice, billing, receivable, การชำระเงิน, ยอดค้าง, ลูกหนี้]
+description: เก็บรายการเรียกเก็บและการชำระเงินของลูกค้า
+fields:
+  _id: {type: ObjectId, description: รหัสรายการชำระเงิน, required: true}
+  customer_id: {type: ObjectId, description: รหัสลูกค้า, required: true}
+  rental_id: {type: ObjectId, description: รหัสรายการเช่าที่เกี่ยวข้อง}
+  amount: {type: decimal, description: จำนวนเงินที่เรียกเก็บ}
+  paid_amount: {type: decimal, description: จำนวนเงินที่ชำระแล้ว}
+  due_date: {type: datetime, description: วันครบกำหนดชำระ}
+  status: {type: string, description: สถานะการชำระเงิน, enum: [pending, partial, paid, overdue, void]}
+relationships:
+  - {target_collection: customers, local_field: customer_id, foreign_field: _id, relationship_type: many-to-one, description: รายการชำระเงินเป็นของลูกค้า}
+  - {target_collection: rentals, local_field: rental_id, foreign_field: _id, relationship_type: many-to-one, description: รายการชำระเงินอ้างอิงรายการเช่า}
+business_rules:
+  - คำถามว่าจ่ายค่าเช่าหรือยังหรือชำระแล้วหรือยัง ต้องอ่าน status, amount, paid_amount และ due_date จริง; การตรวจเพียงว่ามี payment document หรือ has_payment = true บอกได้แค่ว่ามีเอกสาร ไม่ได้แปลว่าชำระครบ
+  - no_payment ไม่ใช่ค่า status ในฐานข้อมูล การไม่พบ payment document ไม่ได้แปลว่ายังไม่ได้ชำระ; ต้องอธิบายว่าไม่พบรายการชำระ ส่วน status = pending เท่านั้นที่หมายถึงยังไม่มีการชำระรายการนั้น
+  - เมื่อถามยอดเรียกเก็บให้รวม amount; เมื่อถามยอดที่รับชำระหรือรายได้ที่ได้รับแล้วให้รวม paid_amount; เมื่อถามยอดคงเหลือให้รวม amount ลบ paid_amount เฉพาะ pending partial overdue
+  - status ใน pending partial หรือ overdue หมายถึงยังมียอดที่ต้องชำระ
+  - เมื่อต้องกรองยอดที่ยังต้องชำระใน aggregation ให้ใช้รายการสถานะแบบ positive $in [pending, partial, overdue] ไม่ใช้ $nin ภายใน $expr
+  - status = pending หมายถึงยังไม่มีการชำระรายการนี้
+  - status = partial หมายถึงชำระแล้วบางส่วน และยอดคงเหลือคำนวณจาก amount ลบ paid_amount
+  - status = paid หมายถึงชำระครบแล้วและไม่มียอดคงเหลือจากรายการนี้
+  - status = overdue หมายถึงเลยกำหนดชำระและยังมียอดคงเหลือ
+  - status = void หมายถึงรายการถูกยกเลิกและไม่ควรนับเป็นยอดที่ต้องชำระ
+notes:
+  - คำถามว่าไม่มี payment document หรือไม่มีข้อมูล payment เลย ต้อง lookup payment ทุก status แล้วตรวจ array ว่าง ห้ามกรอง paid หรือ status อื่นก่อน เพราะจะเปลี่ยนความหมายเป็นไม่มี payment ตามสถานะนั้น
+  - หากต้องการข้อมูลรถหรือรายละเอียดของรายการเช่าเดียวกับ payment ให้ join rental_id ไป rentals._id ไม่ join payments.customer_id ไป rentals.customer_id
+  - เมื่อรวม payment กับ charging, maintenance, incident หรือ child collection อื่น ให้สรุป payment ตาม rental_id, vehicle_id หรือ model ที่ต้องการก่อน เพื่อไม่ให้ยอดถูกคูณจาก fan-out
+  - ยอดคงค้างคำนวณจาก amount ลบ paid_amount เฉพาะเมื่อทั้งสอง field มีข้อมูล
+  - เมื่อตอบผู้ใช้ให้ใช้คำอธิบายสถานะและยอดเงินจริงแทนการแสดง status code อย่างเดียว

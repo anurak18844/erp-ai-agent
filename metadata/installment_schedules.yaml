@@ -1,0 +1,23 @@
+collection: installment_schedules
+aliases: [installment, installment_schedule, installment_due, งวด, ค่างวด, งวดค้าง]
+description: ตารางงวดชำระแต่ละงวดภายใต้แผนผ่อน
+fields:
+  _id: {type: ObjectId, description: รหัสงวด, required: true}
+  plan_id: {type: ObjectId, description: แผนผ่อนเจ้าของงวด, required: true}
+  installment_no: {type: int, description: ลำดับงวด}
+  due_date: {type: datetime, description: วันครบกำหนดชำระ}
+  amount: {type: decimal, description: ยอดที่เรียกเก็บของงวด}
+  paid_amount: {type: decimal, description: ยอดที่ชำระแล้วของงวด}
+  paid_at: {type: datetime, description: วันเวลาที่ชำระล่าสุด}
+  status: {type: string, description: สถานะงวด, enum: [pending, partial, paid, overdue]}
+relationships:
+  - {target_collection: installment_plans, local_field: plan_id, foreign_field: _id, relationship_type: many-to-one, description: งวดเป็นส่วนหนึ่งของแผนผ่อนหนึ่งแผน}
+business_rules:
+  - status ใน pending partial หรือ overdue หมายถึงงวดยังมียอดต้องชำระ
+  - status = overdue หมายถึงเลย due_date และยังชำระไม่ครบ
+  - status = partial หมายถึงชำระบางส่วน และยอดคงเหลือเท่ากับ amount ลบ paid_amount
+  - status = paid หมายถึงงวดนี้ชำระครบแล้วและยอดคงเหลือเป็นศูนย์
+  - ยอดคงเหลือรวมของแผนให้รวม amount ลบ paid_amount เฉพาะงวด pending partial และ overdue
+notes:
+  - เมื่อนับงวดให้นับ schedule _id ที่ไม่ซ้ำ
+  - เรียงงวดตาม installment_no หรือ due_date ตามคำถาม

@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>ERP Agent Debug</title>
+  <style>
+    :root{font-family:Inter,system-ui,sans-serif;color:#172033;background:#f4f7fb}body{margin:0}.wrap{max-width:1100px;margin:auto;padding:28px}
+    header{display:flex;gap:12px;align-items:center;flex-wrap:wrap}input,button,select,textarea{font:inherit;padding:10px 12px;border:1px solid #cad3e1;border-radius:8px}
+    input{flex:1;min-width:260px}button{background:#155eef;color:white;border:0;cursor:pointer}.tabs{display:flex;gap:6px;margin:24px 0 12px;flex-wrap:wrap}.tabs button{background:#e6ecf5;color:#25324b}.tabs button.active{background:#155eef;color:white}
+    section{display:none;background:white;border:1px solid #dce3ee;border-radius:12px;padding:20px;box-shadow:0 5px 18px #24324a0d}section.active{display:block}pre{white-space:pre-wrap;overflow:auto;background:#101828;color:#d0d5dd;padding:16px;border-radius:8px;max-height:520px}.score{display:grid;grid-template-columns:1fr 90px 110px;gap:8px;padding:8px;border-bottom:1px solid #eee}.selected{color:#067647;font-weight:700}.rejected{color:#b42318}.feedback{margin-top:20px;display:flex;gap:8px;flex-wrap:wrap}.muted{color:#667085}
+  </style>
+</head>
+<body><div class="wrap">
+  <h1>ERP AI Agent — Debug</h1>
+  <header><input id="rid" placeholder="request_id เช่น req_..."><button onclick="loadTrace()">Load trace</button></header>
+  <p id="status" class="muted">ใส่ request_id จากผลลัพธ์ POST /chat</p>
+  <div class="tabs" id="tabs"></div>
+  <div id="panels"></div>
+  <div class="feedback"><select id="feedback"><option value="correct">Correct</option><option value="wrong_collection">Wrong Collection</option><option value="wrong_field">Wrong Field</option><option value="wrong_relationship">Wrong Relationship</option><option value="wrong_business_rule">Wrong Business Rule</option><option value="wrong_query">Wrong Query</option><option value="wrong_answer">Wrong Answer</option></select><input id="comment" placeholder="Comment (optional)"><button onclick="sendFeedback()">Save feedback</button></div>
+</div><script>
+let current=null; const views=['Overview','Metadata','Query Plan','Mongo Query','Result','Agent Trace'];
+function show(i){document.querySelectorAll('.tabs button').forEach((b,j)=>b.classList.toggle('active',i===j));document.querySelectorAll('section').forEach((s,j)=>s.classList.toggle('active',i===j))}
+function pretty(v){return `<pre>${escapeHtml(JSON.stringify(v,null,2))}</pre>`} function escapeHtml(s){return s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}
+async function loadTrace(){const id=document.getElementById('rid').value.trim();const r=await fetch('/debug/'+encodeURIComponent(id));if(!r.ok){document.getElementById('status').textContent='ไม่พบ trace';return}current=await r.json();const t=current.trace;document.getElementById('status').textContent=`${t.status} • ${t.total_execution_ms} ms • ${t.retry_history.length} attempt(s)`;
+ const overview={question:t.question,intent:t.intent,status:t.status,attempts:t.retry_history.length,execution_ms:t.total_execution_ms,answer:t.final_answer,'Why This Query?':t.why_this_query};
+ const meta=(t.metadata.candidates||[]).map(x=>`<div class="score"><span>${escapeHtml(x.collection)}<br><small>${escapeHtml(x.reason)}</small></span><span>${x.score}</span><span class="${x.selected?'selected':'rejected'}">${x.selected?'SELECTED':'REJECTED'}</span></div>`).join('')+pretty({fields:t.selected_fields,relationships:t.selected_relationships,business_rules:t.business_rules});
+ const content=[pretty(overview),meta,pretty(t.query_plan),pretty({executed:t.mongo_query,validation:t.query_validation,attempts:t.retry_history}),pretty(t.execution),pretty({timeline:t.timeline,repairs:t.query_repair_summary,result_validation:t.result_validation})];
+ document.getElementById('tabs').innerHTML=views.map((v,i)=>`<button onclick="show(${i})">${v}</button>`).join('');document.getElementById('panels').innerHTML=content.map(x=>`<section>${x}</section>`).join('');show(0)}
+async function sendFeedback(){if(!current)return;const body={feedback_type:document.getElementById('feedback').value,comment:document.getElementById('comment').value};const r=await fetch('/debug/'+encodeURIComponent(current.request_id)+'/feedback',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});document.getElementById('status').textContent=r.ok?'บันทึก feedback แล้ว':'บันทึกไม่สำเร็จ'}
+</script></body></html>
+

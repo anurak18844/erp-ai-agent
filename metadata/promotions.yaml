@@ -1,0 +1,18 @@
+collection: promotions
+aliases: [promotion, promo, benefits, โปรโมชัน, โปรโมชั่น, สิทธิ์]
+description: เก็บรายละเอียดโปรโมชั่นและสิทธิ์การเช่ารถ
+fields:
+  _id: {type: ObjectId, description: รหัสโปรโมชั่น, required: true}
+  code: {type: string, description: รหัสโปรโมชั่น, required: true}
+  name: {type: string, description: ชื่อโปรโมชั่น}
+  source: {type: string, description: แหล่งที่มาของโปรโมชั่น}
+  extra_days: {type: int, description: จำนวนวันเช่าที่เพิ่มจากโปรโมชั่น}
+  active: {type: bool, description: ระบุว่าโปรโมชั่นยังเปิดใช้งานหรือไม่}
+relationships: []
+business_rules:
+  - extra_days เป็นสิทธิ์ตามโปรโมชั่น ไม่ใช่สาเหตุชดเชยเฉพาะรายการเช่า
+  - active = true หมายถึงโปรโมชั่นยังเปิดใช้งานอยู่ ณ เวลาที่ตรวจสอบ
+  - active = false หมายถึงโปรโมชั่นสิ้นสุดหรือปิดใช้งานแล้ว และไม่ควรเสนอว่ายังรับสิทธิ์ได้
+notes:
+  - ใช้ source เมื่อต้องตอบว่าโปรโมชั่นมาจากช่องทางใด
+  - เมื่อตอบผู้ใช้ให้อธิบายชื่อ สิทธิ์ และแหล่งที่มาอย่างเป็นธรรมชาติแทนการแสดงค่า boolean อย่างเดียว

@@ -1,0 +1,32 @@
+collection: incidents
+aliases: [incident, accident, damage_report, อุบัติเหตุ, ความเสียหาย, เคลม]
+description: บันทึกอุบัติเหตุหรือความเสียหายที่เกิดระหว่างรายการเช่ารถ
+fields:
+  _id: {type: ObjectId, description: รหัสเหตุการณ์, required: true}
+  incident_code: {type: string, description: รหัสอุบัติเหตุสำหรับอ้างอิง, required: true}
+  rental_id: {type: ObjectId, description: รายการเช่าที่เกิดเหตุ, required: true}
+  vehicle_id: {type: ObjectId, description: รถที่เกิดเหตุ, required: true}
+  customer_id: {type: ObjectId, description: ลูกค้าที่เกี่ยวข้อง, required: true}
+  occurred_at: {type: datetime, description: วันและเวลาที่เกิดเหตุ}
+  severity: {type: string, description: ระดับความรุนแรง, enum: [minor, major, critical]}
+  description: {type: string, description: รายละเอียดอุบัติเหตุหรือความเสียหาย}
+  location: {type: string, description: สถานที่เกิดเหตุ}
+  status: {type: string, description: สถานะการดำเนินการ, enum: [reported, investigating, resolved]}
+  estimated_cost: {type: decimal, description: ค่าเสียหายที่ประเมินทั้งหมด}
+  customer_liability: {type: decimal, description: ส่วนค่าเสียหายที่ลูกค้ารับผิดชอบ}
+  resolved_at: {type: datetime, description: วันเวลาที่ปิดเหตุการณ์}
+relationships:
+  - {target_collection: rentals, local_field: rental_id, foreign_field: _id, relationship_type: many-to-one, description: อุบัติเหตุเกิดในรายการเช่าหนึ่งรายการ}
+  - {target_collection: vehicles, local_field: vehicle_id, foreign_field: _id, relationship_type: many-to-one, description: อุบัติเหตุเกี่ยวข้องกับรถหนึ่งคัน}
+  - {target_collection: customers, local_field: customer_id, foreign_field: _id, relationship_type: many-to-one, description: อุบัติเหตุเกี่ยวข้องกับลูกค้าหนึ่งราย}
+business_rules:
+  - severity = minor หมายถึงความเสียหายเล็กน้อย, major หมายถึงความเสียหายมาก, และ critical หมายถึงเหตุร้ายแรงที่ควรเร่งติดตาม
+  - status = reported หมายถึงรับแจ้งแล้ว, investigating หมายถึงกำลังตรวจสอบ, resolved หมายถึงดำเนินการเสร็จแล้ว, และ cancelled หมายถึงยกเลิกรายการ
+  - status = reported หมายถึงรับแจ้งแล้วแต่ยังไม่ได้เริ่มตรวจสอบ
+  - status = investigating หมายถึงกำลังตรวจสอบข้อเท็จจริงและค่าเสียหาย
+  - status = resolved หมายถึงดำเนินการเสร็จแล้ว และใช้ resolved_at เป็นเวลาปิดเหตุเมื่อมีข้อมูล
+  - customer_liability คือยอดที่ลูกค้ารับผิดชอบ ไม่ใช่ estimated_cost ทั้งหมด
+  - severity = critical ต้องอธิบายว่าเป็นเหตุร้ายแรงโดยไม่สรุปความรับผิดแทนข้อมูล customer_liability
+notes:
+  - เมื่อนับจำนวนอุบัติเหตุให้นับ incident _id ที่ไม่ซ้ำหลัง join
+  - ห้ามเปิดเผยข้อมูลลูกค้านอกเหนือจากที่ผู้ใช้ร้องขอ

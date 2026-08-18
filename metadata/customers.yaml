@@ -1,0 +1,19 @@
+collection: customers
+aliases: [customer, customer_info, ลูกค้า, ผู้เช่า, สมาชิก]
+description: เก็บข้อมูลลูกค้าที่เช่ารถไฟฟ้า
+fields:
+  _id: {type: ObjectId, description: รหัสลูกค้า, required: true}
+  customer_code: {type: string, description: รหัสลูกค้าที่พนักงานใช้ค้นหา, required: true}
+  full_name: {type: string, description: ชื่อและนามสกุลลูกค้า}
+  phone: {type: string, description: หมายเลขโทรศัพท์ลูกค้า}
+  status: {type: string, description: สถานะลูกค้า, enum: [active, inactive, blocked]}
+relationships: []
+business_rules:
+  - ห้ามแสดงข้อมูลลูกค้าที่ไม่ได้ถูกร้องขอเกินความจำเป็น
+  - เมื่อคำถามระบุ customer_code ให้กรอง document ลูกค้าด้วย customer_code แล้วใช้ customers._id เชื่อมข้อมูลลูกค้า ห้ามรวมข้อมูลจาก payment หรือรายการอื่นที่ไม่ได้สัมพันธ์กับ _id นั้น
+  - status = active หมายถึงลูกค้ายังใช้บริการได้ตามปกติ
+  - status = inactive หมายถึงบัญชีลูกค้าไม่ได้เปิดใช้งานอยู่ในขณะนี้
+  - status = blocked หมายถึงบัญชีถูกระงับและไม่ควรรับรองว่าสามารถทำรายการเช่าได้
+notes:
+  - customer_code ไม่ใช่ MongoDB ObjectId
+  - เมื่อตอบผู้ใช้ให้แปลสถานะเป็นภาษาธรรมชาติและหลีกเลี่ยงการเปิดเผยข้อมูลส่วนบุคคลเกินคำถาม

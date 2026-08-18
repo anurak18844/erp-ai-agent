@@ -1,0 +1,20 @@
+collection: vehicles
+aliases: [vehicle, car, vehicle_info, รถ, รถเช่า]
+description: เก็บข้อมูลรถไฟฟ้าในกองรถเช่า
+fields:
+  _id: {type: ObjectId, description: รหัสรถ, required: true}
+  license_plate: {type: string, description: หมายเลขทะเบียนรถ, required: true}
+  brand: {type: string, description: ยี่ห้อรถ}
+  model: {type: string, description: รุ่นรถ}
+  status: {type: string, description: สถานะรถ, enum: [available, rented, maintenance, retired]}
+relationships: []
+business_rules:
+  - คำว่า รถสถานะ maintenance หรือรถ maintenance หมายถึงต้องกรอง vehicles.status = maintenance ก่อน แล้วจึงตรวจงานซ่อม ไม่ได้หมายถึงรถทุกคันที่เคยมีประวัติใน maintenance
+  - เมื่อคำถามขอสรุปตามรุ่นรถ ให้รวมรถทุกคันที่มี model เดียวกันโดย group ตาม model หลัง join vehicles ห้าม group ตาม vehicle_id แล้วเพียงแสดง model เพราะจะได้ผลรายคันไม่ใช่รายรุ่น
+  - status = available หมายถึงรถมีสถานะพร้อมให้เช่า ณ เวลาที่ตรวจสอบ แต่ยังยืนยันช่วงวันที่เฉพาะไม่ได้หากไม่มีข้อมูลการจองครอบคลุมช่วงนั้น
+  - status = rented หมายถึงรถถูกเช่าอยู่ แต่ผู้เช่าปัจจุบันต้องตรวจจาก rentals ที่มี status = active
+  - status = maintenance หมายถึงรถยังไม่พร้อมให้เช่าเนื่องจากอยู่ระหว่างตรวจเช็กหรือซ่อมบำรุง
+  - status = retired หมายถึงรถถูกยุติการให้บริการและไม่สามารถนำกลับมาเสนอให้เช่าได้
+notes:
+  - license_plate อาจมีหรือไม่มีช่องว่าง ให้ค้นด้วยค่าที่ระบบ ERP จัดเก็บจริง
+  - เมื่อตอบผู้ใช้ให้แปล status เป็นภาษาธรรมชาติ และไม่แสดงรหัสสถานะภาษาอังกฤษอย่างเดียว

@@ -1,0 +1,19 @@
+collection: maintenance
+aliases: [repair, repairs, maintenance_records, งานซ่อม, ซ่อมบำรุง, ประวัติซ่อม]
+description: เก็บประวัติการตรวจเช็กและซ่อมบำรุงรถ
+fields:
+  _id: {type: ObjectId, description: รหัสงานซ่อม, required: true}
+  vehicle_id: {type: ObjectId, description: รหัสรถที่เข้าซ่อม, required: true}
+  opened_at: {type: datetime, description: วันที่เปิดงานซ่อม}
+  completed_at: {type: datetime, description: วันที่ซ่อมเสร็จ}
+  description: {type: string, description: รายละเอียดอาการหรืองานซ่อม}
+  status: {type: string, description: สถานะงานซ่อม, enum: [open, in_progress, completed, cancelled]}
+relationships:
+  - {target_collection: vehicles, local_field: vehicle_id, foreign_field: _id, relationship_type: many-to-one, description: งานซ่อมเป็นของรถหนึ่งคัน}
+business_rules:
+  - ประวัติซ่อมเรียงจาก opened_at ล่าสุดไปเก่าสุด เว้นแต่ผู้ใช้ระบุอย่างอื่น
+  - status = open หรือ in_progress หมายถึงงานซ่อมยังไม่เสร็จและรถอาจยังไม่พร้อมให้เช่า
+  - status = completed หมายถึงงานซ่อมเสร็จแล้ว โดยใช้ completed_at เป็นเวลาที่เสร็จเมื่อมีข้อมูล
+  - status = cancelled หมายถึงงานซ่อมถูกยกเลิกและไม่ควรอธิบายว่าเสร็จเรียบร้อยแล้ว
+notes:
+  - description คือข้อมูลที่ใช้สรุปสิ่งที่เคยซ่อม

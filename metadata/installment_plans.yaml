@@ -1,0 +1,27 @@
+collection: installment_plans
+aliases: [installment_plan, financing, payment_plan, แผนผ่อน, ตารางผ่อน, สัญญาผ่อน]
+description: แผนผ่อนชำระของลูกค้าที่ผูกกับรายการเช่า
+fields:
+  _id: {type: ObjectId, description: รหัสแผนผ่อน, required: true}
+  plan_code: {type: string, description: รหัสแผนผ่อนสำหรับอ้างอิง, required: true}
+  customer_id: {type: ObjectId, description: ลูกค้าเจ้าของแผน, required: true}
+  rental_id: {type: ObjectId, description: รายการเช่าที่ใช้แผนผ่อน, required: true}
+  total_amount: {type: decimal, description: ยอดตามแผนทั้งหมด}
+  down_payment: {type: decimal, description: เงินชำระเริ่มต้น}
+  installment_count: {type: int, description: จำนวนงวดทั้งหมด}
+  installment_amount: {type: decimal, description: จำนวนเงินมาตรฐานต่องวด}
+  start_date: {type: datetime, description: วันที่เริ่มแผน}
+  status: {type: string, description: สถานะแผนผ่อน, enum: [active, completed, defaulted, cancelled]}
+relationships:
+  - {target_collection: customers, local_field: customer_id, foreign_field: _id, relationship_type: many-to-one, description: แผนผ่อนเป็นของลูกค้าหนึ่งราย}
+  - {target_collection: rentals, local_field: rental_id, foreign_field: _id, relationship_type: many-to-one, description: แผนผ่อนผูกกับรายการเช่าหนึ่งรายการ}
+business_rules:
+  - status = active หมายถึงแผนยังมีงวดที่ต้องติดตาม แต่ไม่ได้แปลว่ามีงวดเลยกำหนดเสมอไป
+  - status = defaulted หมายถึงมีงวดเลยกำหนดที่ยังมียอดคงเหลือ
+  - status = completed หมายถึงทุกงวดชำระครบแล้ว
+  - status = cancelled หมายถึงแผนถูกยกเลิกและไม่ควรนับเป็นยอดที่ต้องติดตาม
+  - ยอดค้างจริงต้องคำนวณจาก installment_schedules ไม่ใช่ total_amount ลบ down_payment โดยตรง
+notes:
+  - หาก query เปรียบเทียบ total_amount กับผลรวม schedule แล้วคืน 0 แถว ให้สรุปว่าไม่พบแผนที่ยอดไม่ตรงกัน ไม่ใช่สรุปว่าไม่มีข้อมูลแผนผ่อน
+  - ใช้ plan_code เมื่อต้องแสดงรหัสให้ผู้ใช้
+  - หลีกเลี่ยงการรวม payments กับ installment_schedules เป็นยอดเดียวกันหากผู้ใช้ไม่ได้ขอ เพราะเป็นคนละระบบเรียกเก็บ
